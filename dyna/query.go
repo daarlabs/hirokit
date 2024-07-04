@@ -11,14 +11,18 @@ type Query struct {
 	Alias  string
 }
 
-func CreateSelect(table, textColumn string, valueColumn ...string) Query {
+type SelectProps struct {
+	ValueColumn string
+}
+
+func CreateSelect(table, textColumn string, props SelectProps) Query {
 	var alias string
 	for _, item := range strings.Split(table, "-") {
 		alias += strings.ToLower(item[0:1])
 	}
 	value := "id"
-	if len(valueColumn) > 0 {
-		value = valueColumn[0]
+	if len(props.ValueColumn) > 0 {
+		value = props.ValueColumn
 	}
 	return Query{
 		Table: table,

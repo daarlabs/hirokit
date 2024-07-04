@@ -10,14 +10,14 @@ import (
 	"github.com/daarlabs/hirokit/logger"
 )
 
-type Mirage interface {
+type Hiro interface {
 	Router
-	Log(handler logger.Handler) Mirage
-	DynamicHandler(handler Handler) Mirage
+	Log(handler logger.Handler) Hiro
+	DynamicHandler(handler Handler) Hiro
 	Layout() LayoutManager
 	Run(address string)
 	Mux() *http.ServeMux
-	Plugin(plugin Plugin) Mirage
+	Plugin(plugin Plugin) Hiro
 }
 
 type core struct {
@@ -45,7 +45,7 @@ const (
 	Version = "0.1.0"
 )
 
-func New(cfg config.Config) Mirage {
+func New(cfg config.Config) Hiro {
 	cfg = cfg.Init()
 	mux := http.NewServeMux()
 	rts := make([]*Route, 0)
@@ -72,7 +72,7 @@ func New(cfg config.Config) Mirage {
 	return c
 }
 
-func (c *core) Log(handler logger.Handler) Mirage {
+func (c *core) Log(handler logger.Handler) Hiro {
 	if c.config.Logger == nil {
 		return c
 	}
@@ -80,7 +80,7 @@ func (c *core) Log(handler logger.Handler) Mirage {
 	return c
 }
 
-func (c *core) DynamicHandler(handler Handler) Mirage {
+func (c *core) DynamicHandler(handler Handler) Hiro {
 	c.dynamicHandler = handler
 	return c
 }
@@ -111,7 +111,7 @@ func (c *core) Mux() *http.ServeMux {
 	return c.mux
 }
 
-func (c *core) Plugin(plugin Plugin) Mirage {
+func (c *core) Plugin(plugin Plugin) Hiro {
 	c.plugins = append(c.plugins, plugin)
 	if c.config.Localization.Translator != nil {
 		for langCode, locales := range plugin.Locales {

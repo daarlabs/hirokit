@@ -1,12 +1,24 @@
 package tempest
 
 type DisplayClass interface {
+	Hidden(modifiers ...Modifier) Tempest
 	Block(modifiers ...Modifier) Tempest
 	Flex(modifiers ...Modifier) Tempest
 	Grid(modifiers ...Modifier) Tempest
 	Inline(modifiers ...Modifier) Tempest
 	InlineFlex(modifiers ...Modifier) Tempest
 	InlineBlock(modifiers ...Modifier) Tempest
+}
+
+func (b *Builder) Hidden(modifiers ...Modifier) Tempest {
+	return b.createStyle(
+		style{
+			prefix:    "hidden",
+			value:     "none",
+			fn:        displayClass,
+			modifiers: modifiers,
+		},
+	)
 }
 
 func (b *Builder) Block(modifiers ...Modifier) Tempest {

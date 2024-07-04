@@ -23,6 +23,7 @@ type FilterBuilder interface {
 	Match() FilterBuilder
 	Not(not ...bool) FilterBuilder
 	TsQuery(values ...any) FilterBuilder
+	Null() FilterBuilder
 }
 
 type filterBuilder struct {
@@ -36,12 +37,6 @@ const (
 	filterFieldPart    = "filter-field"
 	filterOperatorPart = "filter-operator"
 	filterValuePart    = "filter-value"
-)
-
-var (
-	fulltextValuesReplacer = strings.NewReplacer(
-	
-	)
 )
 
 func Filter(modifiers ...Modifier) FilterBuilder {
@@ -179,6 +174,17 @@ func (b *filterBuilder) Value(value any, name ...string) FilterBuilder {
 			sql:      sql,
 			name:     valueName,
 			value:    value,
+		},
+	)
+	return b
+}
+
+func (b *filterBuilder) Null() FilterBuilder {
+	b.parts = append(
+		b.parts,
+		queryPart{
+			partType: filterValuePart,
+			sql:      "NULL",
 		},
 	)
 	return b

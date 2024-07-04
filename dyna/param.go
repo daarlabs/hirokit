@@ -14,6 +14,7 @@ type Param struct {
 	Offset   int
 	Limit    int
 	Order    []string
+	Group    []string
 	Fields   Fields
 }
 
@@ -37,6 +38,7 @@ func (p Param) Parse(c hiro.Ctx) Param {
 
 func (p Param) Use(q *esquel.Esquel) {
 	useFulltextParam(q, p.Fulltext, p.Fields.Fulltext)
+	useGroupParam(q, p.Group)
 	useOrderParam(q, p.Order, p.Fields.Order)
 	useOffsetParam(q, p.Offset)
 	useLimitParam(q, p.Limit)
@@ -87,6 +89,18 @@ func useOrderParam(q *esquel.Esquel, order []string, columns map[string]string) 
 
 func useOffsetParam(q *esquel.Esquel, offset int) {
 	q.Q(`OFFSET @offset`, esquel.Map{Offset: offset})
+}
+
+func useGroupParam(q *esquel.Esquel, group []string) {
+	n := len(group)
+	if n == 0 {
+		return
+	}
+	r := make([]string, n)
+	for i, g := range group {
+		r[i] = strx.Escape(strings.TrimSpace(g))
+	}
+	q.Q(`GROUP BY ` + strings.Join(r, ","))
 }
 
 func useLimitParam(q *esquel.Esquel, limit int) {

@@ -59,6 +59,26 @@ func Click(script string, modifiers ...string) gox.Node {
 	return CreateEvent("click", script, modifiers...)
 }
 
+func DragOver(script string, modifiers ...string) gox.Node {
+	return CreateEvent("dragover", script, modifiers...)
+}
+
+func DragLeave(script string, modifiers ...string) gox.Node {
+	return CreateEvent("dragleave", script, modifiers...)
+}
+
+func Drop(script string, modifiers ...string) gox.Node {
+	return CreateEvent("drop", script, modifiers...)
+}
+
+func Change(script string, modifiers ...string) gox.Node {
+	return CreateEvent("change", script, modifiers...)
+}
+
+func Blur(script string, modifiers ...string) gox.Node {
+	return CreateEvent("blur", script, modifiers...)
+}
+
 func Input(script string, modifiers ...string) gox.Node {
 	return CreateEvent("input", script, modifiers...)
 }

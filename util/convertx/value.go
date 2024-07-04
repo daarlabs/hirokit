@@ -27,6 +27,12 @@ func ConvertValue(src string, t interface{}) error {
 			return err
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
+	case reflect.Int64:
+		val, err := strconv.ParseInt(src, 10, 64)
+		if err != nil {
+			return err
+		}
+		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Float32:
 		val, err := strconv.ParseFloat(floatReplacer.Replace(src), 32)
 		if err != nil {
