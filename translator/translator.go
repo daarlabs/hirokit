@@ -18,7 +18,6 @@ type Translator interface {
 }
 
 type translator struct {
-	config     Config
 	translates map[string]map[string]string
 }
 
@@ -28,20 +27,21 @@ const (
 	Toml = "toml"
 )
 
-func New(config Config) Translator {
+func New(config ...Config) Translator {
 	t := &translator{
-		config:     config,
 		translates: make(map[string]map[string]string),
 	}
-	if len(t.config.Dir) == 0 {
-		return t
-	}
-	if _, err := os.Stat(t.config.Dir); os.IsNotExist(err) {
-		panic(ErrorInvalidDir)
-	}
-	err := t.walk()
-	if err != nil {
-		panic(err)
+	for _, c := range config {
+		if len(c.Dir) == 0 {
+			return t
+		}
+		if _, err := os.Stat(c.Dir); os.IsNotExist(err) {
+			panic(ErrorInvalidDir)
+		}
+		err := t.walk(c)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return t
 }
@@ -70,24 +70,24 @@ func (t *translator) Translate(langCode, key string, args ...map[string]any) str
 	return translate
 }
 
-func (t *translator) walk() error {
+func (t *translator) walk(c Config) error {
 	if err := filepath.Walk(
-		t.config.Dir, func(path string, info fs.FileInfo, err error) error {
+		c.Dir, func(path string, info fs.FileInfo, err error) error {
 			if info.IsDir() {
 				return nil
 			}
-			if !strings.HasSuffix(info.Name(), "."+t.config.FileType) {
+			if !strings.HasSuffix(info.Name(), "."+c.FileType) {
 				return nil
 			}
-			lang := strings.TrimSuffix(info.Name(), "."+t.config.FileType)
+			lang := strings.TrimSuffix(info.Name(), "."+c.FileType)
 			if t.translates[lang] == nil {
 				t.translates[lang] = make(map[string]string)
 			}
-			dir := strings.TrimPrefix(t.config.Dir, "./")
+			dir := strings.TrimPrefix(c.Dir, "./")
 			subpath := strings.TrimPrefix(strings.TrimSuffix(path, info.Name()), dir)
 			subpath = strings.TrimPrefix(subpath, "/")
 			subpath = strings.TrimSuffix(subpath, "/")
-			if err := t.read(lang, path, createKeyPrefixFromPath(subpath)); err != nil {
+			if err := t.read(c, lang, path, createKeyPrefixFromPath(subpath)); err != nil {
 				return err
 			}
 			return nil
@@ -98,13 +98,13 @@ func (t *translator) walk() error {
 	return nil
 }
 
-func (t *translator) read(lang, path, prefix string) error {
+func (t *translator) read(c Config, lang, path, prefix string) error {
 	fileBytes, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	fileData := make(map[string]any)
-	switch t.config.FileType {
+	switch c.FileType {
 	case Json:
 		if err := json.Unmarshal(fileBytes, &fileData); err != nil {
 			return err

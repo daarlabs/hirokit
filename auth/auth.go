@@ -20,10 +20,10 @@ type Manager interface {
 	CustomUser(id int, email string) UserManager
 	Manager() UserManager
 	
-	In(email, password string) (In, error)
+	In(email, password string, roles ...Role) (In, error)
 	Out() error
 	
-	MustIn(email, password string) In
+	MustIn(email, password string, roles ...Role) In
 	MustOut()
 }
 
@@ -60,7 +60,7 @@ func New(
 	}
 }
 
-func (m *manager) In(email, password string) (In, error) {
+func (m *manager) In(email, password string, roles ...Role) (In, error) {
 	var r User
 	err := esquel.New(m.db).
 		Q(fmt.Sprintf(`SELECT id, email, roles, password, tfa FROM %s`, usersTable)).
@@ -78,6 +78,23 @@ func (m *manager) In(email, password string) (In, error) {
 			Ok:  false,
 			Tfa: false,
 		}, ErrorInvalidCredentials
+	}
+	if len(roles) > 0 && len(r.Roles) > 0 {
+		var exists bool
+		for _, userRole := range r.Roles {
+			for _, role := range roles {
+				if userRole == role.Name {
+					exists = true
+					break
+				}
+			}
+		}
+		if !exists {
+			return In{
+				Ok:  false,
+				Tfa: false,
+			}, ErrorInvalidCredentials
+		}
 	}
 	ok, err := argon2.VerifyEncoded([]byte(password), []byte(r.Password))
 	if !ok || err != nil {
@@ -109,8 +126,8 @@ func (m *manager) In(email, password string) (In, error) {
 	}, nil
 }
 
-func (m *manager) MustIn(email, password string) In {
-	r, err := m.In(email, password)
+func (m *manager) MustIn(email, password string, roles ...Role) In {
+	r, err := m.In(email, password, roles...)
 	if err != nil {
 		panic(err)
 	}

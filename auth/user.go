@@ -40,18 +40,18 @@ type UserManager interface {
 }
 
 type User struct {
-	Id           int              `json:"id"`
-	Active       bool             `json:"active"`
-	Roles        []string         `json:"roles"`
-	Email        string           `json:"email"`
-	Password     string           `json:"password"`
-	Tfa          bool             `json:"tfa"`
-	TfaSecret    sql.Null[string] `json:"tfaSecret"`
-	TfaCodes     sql.Null[string] `json:"tfaCodes"`
-	TfaUrl       sql.Null[string] `json:"tfaUrl"`
-	LastActivity time.Time        `json:"lastActivity"`
-	CreatedAt    time.Time        `json:"createdAt"`
-	UpdatedAt    time.Time        `json:"updatedAt"`
+	Id           int              `json:"id" db:"id"`
+	Active       bool             `json:"active" db:"active"`
+	Roles        []string         `json:"roles" db:"roles"`
+	Email        string           `json:"email" db:"email"`
+	Password     string           `json:"password" db:"password"`
+	Tfa          bool             `json:"tfa" db:"tfa"`
+	TfaSecret    sql.Null[string] `json:"tfaSecret" db:"tfa_secret"`
+	TfaCodes     sql.Null[string] `json:"tfaCodes" db:"tfa_codes"`
+	TfaUrl       sql.Null[string] `json:"tfaUrl" db:"tfa_url"`
+	LastActivity time.Time        `json:"lastActivity" db:"last_activity"`
+	CreatedAt    time.Time        `json:"createdAt" db:"created_at"`
+	UpdatedAt    time.Time        `json:"updatedAt" db:"updated_at"`
 }
 
 type userManager struct {
