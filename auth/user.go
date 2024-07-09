@@ -26,6 +26,7 @@ type UserManager interface {
 	ForceUpdatePassword(newPassword string) error
 	Enable(id ...int) error
 	Disable(id ...int) error
+	UpdateActivity(id ...int) error
 	
 	MustExists(id ...int) bool
 	MustGet(id ...int) User
@@ -37,6 +38,7 @@ type UserManager interface {
 	MustForceUpdatePassword(newPassword string)
 	MustEnable(id ...int)
 	MustDisable(id ...int)
+	MustUpdateActivity(id ...int)
 }
 
 type User struct {
@@ -321,6 +323,29 @@ func (u *userManager) Disable(id ...int) error {
 
 func (u *userManager) MustDisable(id ...int) {
 	err := u.Disable(id...)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (u *userManager) UpdateActivity(id ...int) error {
+	if len(id) > 0 {
+		u.id = id[0]
+	}
+	if u.id == 0 && u.email == "" {
+		return ErrorInvalidUser
+	}
+	err := esquel.New(u.db).Q(fmt.Sprintf(`UPDATE %s`, usersTable)).
+		Q(`SET last_activity = CURRENT_TIMESTAMP`).
+		If(u.id > 0, `WHERE id = @id`, esquel.Map{"id": u.id}).
+		If(u.id == 0, `WHERE email = @email`, esquel.Map{"email": u.email}).
+		Exec()
+	clear(u.data)
+	return err
+}
+
+func (u *userManager) MustUpdateActivity(id ...int) {
+	err := u.UpdateActivity(id...)
 	if err != nil {
 		panic(err)
 	}
