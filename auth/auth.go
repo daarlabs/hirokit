@@ -119,6 +119,9 @@ func (m *manager) In(email, password string, roles ...Role) (In, error) {
 	if err != nil {
 		return In{}, err
 	}
+	if err := m.User().UpdateActivity(r.Id); err != nil {
+		return In{}, err
+	}
 	return In{
 		Token: token,
 		Ok:    true,

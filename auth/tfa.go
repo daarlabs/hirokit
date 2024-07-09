@@ -137,7 +137,14 @@ func (m tfaManager) Verify(otp string) (string, error) {
 		return "", err
 	}
 	m.cookie.Set(TfaCookieKey, "", time.Millisecond)
-	return m.manager.Session().New(u)
+	token, err = m.manager.Session().New(u)
+	if err != nil {
+		return "", err
+	}
+	if err := m.manager.User().UpdateActivity(u.Id); err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (m tfaManager) MustVerify(otp string) string {
