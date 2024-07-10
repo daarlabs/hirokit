@@ -111,16 +111,7 @@ func (m *migrator) Init() error {
 		if exists {
 			continue
 		}
-		if err := esquel.New(db).Q(
-			fmt.Sprintf(
-				`CREATE TABLE IF NOT EXISTS %s (
-    id serial primary key,
-    name varchar(255) not null,
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
-    )`, migrationsTable,
-			),
-		).Exec(); err != nil {
+		if err := m.createMigrationsTable(db); err != nil {
 			return err
 		}
 	}
@@ -264,6 +255,22 @@ func (m *migrator) check(err error) {
 	panic(err)
 }
 
+func (m *migrator) createMigrationsTable(db *esquel.DB) error {
+	if err := esquel.New(db).Q(
+		fmt.Sprintf(
+			`CREATE TABLE IF NOT EXISTS %s (
+    id serial primary key,
+    name varchar(255) not null,
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
+    )`, migrationsTable,
+		),
+	).Exec(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *migrator) getLastMigrationName() ([]string, error) {
 	result := make([]string, 0)
 	for name, db := range m.databases {
@@ -319,7 +326,9 @@ func (m *migrator) getExistingMigrationsNames() ([]string, error) {
 			return result, err
 		}
 		if !exists {
-			continue
+			if err := m.createMigrationsTable(db); err != nil {
+				return result, err
+			}
 		}
 		r := make([]string, 0)
 		if err := esquel.New(db).Q(
