@@ -47,19 +47,19 @@ func ConvertStringToSqlNull(value string, valueType reflect.Type) any {
 		if err != nil {
 			return sql.Null[any]{V: nil, Valid: false}
 		}
-		return sql.Null[int64]{V: res, Valid: true}
+		return sql.Null[int64]{V: res, Valid: res > 0}
 	case nullFloat32Type:
 		res, err := strconv.ParseFloat(value, 32)
 		if err != nil {
 			return sql.Null[any]{V: nil, Valid: false}
 		}
-		return sql.Null[float32]{V: float32(res), Valid: true}
+		return sql.Null[float32]{V: float32(res), Valid: res > 0}
 	case nullFloat64Type:
 		res, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return sql.Null[any]{V: nil, Valid: false}
 		}
-		return sql.Null[float64]{V: res, Valid: true}
+		return sql.Null[float64]{V: res, Valid: res > 0}
 	case nullBoolType:
 		return sql.Null[bool]{V: value == "true", Valid: true}
 	case nullTimeType:
