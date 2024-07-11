@@ -46,11 +46,13 @@ func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 		if h.core.router.config.Router.Recover {
 			defer h.createRecover(c)
 		}
-		for _, middleware := range h.applyInternalMiddlewares(matchedRoute, h.core.router.middlewares) {
-			c.err = middleware(c)
-			if c.err != nil {
-				h.createResponse(c)
-				return
+		if !strings.HasPrefix(r.URL.Path, tempestAssetsPath) {
+			for _, middleware := range h.applyInternalMiddlewares(matchedRoute, h.core.router.middlewares) {
+				c.err = middleware(c)
+				if c.err != nil {
+					h.createResponse(c)
+					return
+				}
 			}
 		}
 		if len(c.response.DataType) == 0 {

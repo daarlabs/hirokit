@@ -16,6 +16,7 @@ import (
 )
 
 type Router interface {
+	Use(handler ...Handler) Router
 	Static(path, dir string) Router
 	Route(path any, handler Handler, config ...RouteConfig) Router
 	Group(path any, name ...string) Router
@@ -32,12 +33,17 @@ type router struct {
 }
 
 const (
-	paramRegex = `[0-9a-zA-Z]+`
+	paramRegex = `\S+`
 )
 
 const (
 	dynamicName = "dynamic"
 )
+
+func (r *router) Use(handler ...Handler) Router {
+	r.middlewares = append(r.middlewares, handler...)
+	return r
+}
 
 func (r *router) Static(path, dir string) Router {
 	r.mux.Handle(http.MethodGet+" "+path, http.StripPrefix(path, http.FileServer(http.Dir(dir))))
