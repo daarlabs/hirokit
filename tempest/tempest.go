@@ -3,6 +3,7 @@ package tempest
 import (
 	"embed"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -24,6 +25,16 @@ var (
 	scripts        string
 )
 
+var (
+	defaultStyles = []string{
+		"https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css",
+	}
+	defaultScripts = []string{
+		"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js",
+		"https://unpkg.com/htmx.org@1.9.12",
+	}
+)
+
 //go:embed base.css
 var baseCss embed.FS
 
@@ -38,6 +49,8 @@ func Class(classes ...string) Tempest {
 
 func Start() {
 	processGlobalConfig()
+	injectDefaultStyles()
+	injectDefaultScripts()
 	processBaseStyles()
 	erm := createExternalResourceManager()
 	erm.mustRun()
@@ -55,6 +68,24 @@ func NamedStyles(name string) string {
 
 func Scripts() string {
 	return scripts
+}
+
+func injectDefaultStyles() {
+	for _, s := range defaultStyles {
+		if slices.Contains(GlobalConfig.Styles, s) {
+			continue
+		}
+		GlobalConfig.Styles = append(GlobalConfig.Styles, s)
+	}
+}
+
+func injectDefaultScripts() {
+	for _, s := range defaultScripts {
+		if slices.Contains(GlobalConfig.Scripts, s) {
+			continue
+		}
+		GlobalConfig.Scripts = append(GlobalConfig.Scripts, s)
+	}
 }
 
 func processGlobalConfig() {

@@ -7,6 +7,7 @@ import (
 	"time"
 	
 	"github.com/daarlabs/hirokit/gox"
+	"github.com/daarlabs/hirokit/hx"
 )
 
 type MandatoryComponent interface {
@@ -17,6 +18,15 @@ type MandatoryComponent interface {
 
 type Component struct {
 	Ctx `json:"-"`
+}
+
+type Interaction struct {
+	c       Component
+	trigger string
+	target  string
+	action  string
+	swap    string
+	values  string
 }
 
 type component struct {
@@ -49,22 +59,80 @@ func createComponent(ct MandatoryComponent, ctx *ctx, route *Route, action strin
 	return c
 }
 
+func (c Component) On(trigger string) *Interaction {
+	return &Interaction{
+		c:       c,
+		trigger: trigger,
+		swap:    hx.SwapNone,
+	}
+}
+
+func (i *Interaction) Node() gox.Node {
+	return gox.Fragment(
+		gox.If(len(i.action) > 0, hx.Get(i.action)),
+		gox.If(len(i.target) > 0, hx.Target(i.target)),
+		gox.If(len(i.trigger) > 0, hx.Trigger(i.trigger)),
+		gox.If(len(i.swap) > 0, hx.Swap(i.swap)),
+		gox.If(len(i.values) > 0, hx.Vals(i.values)),
+	)
+}
+
+func (i *Interaction) Action(action string) *Interaction {
+	i.action = i.c.Generate().Action(action)
+	return i
+}
+
+func (i *Interaction) Replace(target string) *Interaction {
+	i.createTarget(target)
+	i.swap = hx.SwapOuterHtml
+	return i
+}
+
+func (i *Interaction) Prepend(target string) *Interaction {
+	i.createTarget(target)
+	i.swap = hx.SwapBeforeBegin
+	return i
+}
+
+func (i *Interaction) Append(target string) *Interaction {
+	i.createTarget(target)
+	i.swap = hx.SwapBeforeEnd
+	return i
+}
+
+func (i *Interaction) Delete(target string) *Interaction {
+	i.createTarget(target)
+	i.swap = hx.SwapDelete
+	return i
+}
+
+func (i *Interaction) With(values Map) *Interaction {
+	valuesBytes, err := json.Marshal(values)
+	if err != nil {
+		return i
+	}
+	i.values = string(valuesBytes)
+	return i
+}
+
+func (i *Interaction) createTarget(target string) {
+	i.target = "#" + strings.TrimPrefix(target, "#")
+}
+
 func (c *component) render() gox.Node {
 	var methodName string
 	var shouldCallAction bool
 	isActionRequest := len(c.action) > 0
 	if isActionRequest {
 		methodName, shouldCallAction = c.getAction()
+		if !shouldCallAction {
+			return gox.Fragment()
+		}
 	}
-	if isActionRequest && !shouldCallAction {
-		return gox.Fragment()
-	}
-	if !isActionRequest || (isActionRequest && shouldCallAction) {
-		c.mustGet()
-		c.injectContext()
-		c.ct.Mount()
-	}
-	if isActionRequest && shouldCallAction {
+	c.mustGet()
+	c.injectContext()
+	c.ct.Mount()
+	if shouldCallAction {
 		c.callAction(methodName)
 		return gox.Fragment()
 	}
