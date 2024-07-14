@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-
+	
 	"github.com/gorilla/websocket"
 )
 
 type Ws interface {
 	Broadcast(bytes []byte)
-	Find(id ...int) ([]Client, error)
-	FindOne(id int) (Client, error)
-	Serve(req *http.Request, res http.ResponseWriter, id int) error
+	Find(id ...string) ([]Client, error)
+	FindOne(id string) (Client, error)
+	Serve(req *http.Request, res http.ResponseWriter, id string) error
 	OnRead(fn func(bytes []byte)) Ws
-
-	MustFind(id ...int) []Client
-	MustFindOne(id int) Client
-	MustServe(req *http.Request, res http.ResponseWriter, id int)
+	
+	MustFind(id ...string) []Client
+	MustFindOne(id string) Client
+	MustServe(req *http.Request, res http.ResponseWriter, id string)
 }
 
 type ws struct {
@@ -48,7 +48,7 @@ func (s *ws) Broadcast(bytes []byte) {
 	s.hub.broadcast <- bytes
 }
 
-func (s *ws) Find(id ...int) ([]Client, error) {
+func (s *ws) Find(id ...string) ([]Client, error) {
 	result := make([]Client, 0)
 	for c := range s.hub.clients {
 		if slices.Contains(id, c.id) {
@@ -61,7 +61,7 @@ func (s *ws) Find(id ...int) ([]Client, error) {
 	return result, nil
 }
 
-func (s *ws) MustFind(id ...int) []Client {
+func (s *ws) MustFind(id ...string) []Client {
 	c, err := s.Find(id...)
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func (s *ws) MustFind(id ...int) []Client {
 	return c
 }
 
-func (s *ws) FindOne(id int) (Client, error) {
+func (s *ws) FindOne(id string) (Client, error) {
 	for c := range s.hub.clients {
 		if c.id == id {
 			return c, nil
@@ -78,7 +78,7 @@ func (s *ws) FindOne(id int) (Client, error) {
 	return nil, ErrorInvalidClient
 }
 
-func (s *ws) MustFindOne(id int) Client {
+func (s *ws) MustFindOne(id string) Client {
 	c, err := s.FindOne(id)
 	if err != nil {
 		panic(err)
@@ -91,7 +91,7 @@ func (s *ws) OnRead(fn func(bytes []byte)) Ws {
 	return s
 }
 
-func (s *ws) Serve(req *http.Request, res http.ResponseWriter, id int) error {
+func (s *ws) Serve(req *http.Request, res http.ResponseWriter, id string) error {
 	conn, err := s.upgrader.Upgrade(res, req, nil)
 	if err != nil {
 		return err
@@ -116,14 +116,14 @@ func (s *ws) Serve(req *http.Request, res http.ResponseWriter, id int) error {
 				}
 			}
 		}
-
+		
 	}()
 	go c.watchRead()
 	go c.watchWrite()
 	return nil
 }
 
-func (s *ws) MustServe(req *http.Request, res http.ResponseWriter, id int) {
+func (s *ws) MustServe(req *http.Request, res http.ResponseWriter, id string) {
 	err := s.Serve(req, res, id)
 	if err != nil {
 		panic(err)

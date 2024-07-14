@@ -32,6 +32,7 @@ var (
 	defaultScripts = []string{
 		"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js",
 		"https://unpkg.com/htmx.org@1.9.12",
+		"https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js",
 	}
 )
 

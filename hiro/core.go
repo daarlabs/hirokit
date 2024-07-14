@@ -7,6 +7,8 @@ import (
 	"strings"
 	
 	"github.com/daarlabs/hirokit/config"
+	"github.com/daarlabs/hirokit/devtool"
+	"github.com/daarlabs/hirokit/env"
 	"github.com/daarlabs/hirokit/logger"
 )
 
@@ -103,6 +105,9 @@ func (c *core) Run(address string) {
 			continue
 		}
 		fmt.Println("Plugin loaded: ", p.Name)
+	}
+	if env.Development() && c.config.Dev.LiveReload {
+		go devtool.Refresh()
 	}
 	log.Fatalln(http.ListenAndServe(address, c.mux))
 }

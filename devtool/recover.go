@@ -16,12 +16,12 @@ type debugStackTrace struct {
 	content string
 }
 
-func CreateRecoverPage(assets Node, err error) Node {
+func Recover(assets Node, err error) Node {
 	stackTraceList, stackTraceErr := parseStackTrace()
 	if stackTraceErr != nil {
 		err = stackTraceErr
 	}
-	return layout(
+	return recoverPageLayout(
 		assets,
 		Div(
 			tempest.Class().TextRed(400).FontBold().Mb(4).TextMain(),
@@ -108,4 +108,37 @@ func parseStackTrace() ([]debugStackTrace, error) {
 		}
 	}
 	return result, nil
+}
+
+func recoverPageLayout(assets Node, nodes ...Node) Node {
+	return Html(
+		Head(
+			Title(Text("Recovered error")),
+			Meta(
+				Name("viewport"),
+				Content("width=device-width, initial-scale=1"),
+			),
+			Raw(
+				`
+				<link rel="apple-touch-icon" sizes="180x180" href="/public/favicon/apple-touch-icon.png">
+				<link rel="icon" type="image/png" sizes="32x32" href="/public/favicon/favicon-32x32.png">
+				<link rel="icon" type="image/png" sizes="16x16" href="/public/favicon/favicon-16x16.png">
+				<link rel="manifest" href="/public/favicon/site.webmanifest">
+				<link rel="mask-icon" href="/public/favicon/safari-pinned-tab.svg" color="#5bbad5">
+				<link rel="shortcut icon" href="/public/favicon/favicon.ico">
+				<meta name="msapplication-TileColor" content="#00aba9">
+				<meta name="msapplication-config" content="/public/favicon/browserconfig.xml">
+				<meta name="theme-color" content="#ffffff">
+			`,
+			),
+			assets,
+		),
+		Body(
+			tempest.Class().BgSlate(900).TextWhite().TextXs().Grid().PlaceItemsCenter().
+				H("screen").W("screen").Overflow("auto"),
+			Div(
+				Fragment(nodes...),
+			),
+		),
+	)
 }

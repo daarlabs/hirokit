@@ -25,6 +25,7 @@ type handler struct {
 
 func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		isTempest := strings.HasPrefix(r.URL.Path, tempestAssetsPath)
 		compressedWriter := createCompressedWriter(w)
 		matchedRoute := h.matchRoute(r.URL.Path)
 		c := createContext(
@@ -46,7 +47,7 @@ func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 		if h.core.router.config.Router.Recover {
 			defer h.createRecover(c)
 		}
-		if !strings.HasPrefix(r.URL.Path, tempestAssetsPath) {
+		if !isTempest {
 			for _, middleware := range h.applyInternalMiddlewares(matchedRoute, h.core.router.middlewares) {
 				c.err = middleware(c)
 				if c.err != nil {
@@ -60,6 +61,9 @@ func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 			if err != nil {
 				c.err = err
 			}
+		}
+		if env.Development() && !isTempest && h.core.config.Dev.Tool {
+			devtoolPush(c)
 		}
 		h.createResponse(c)
 	}
@@ -145,7 +149,7 @@ func (h handler) createRecover(c *ctx) {
 		c.err = err
 		isHx := c.Request().Is().Hx()
 		if env.Development() && !isHx {
-			err = c.Response().Html(gox.Render(devtool.CreateRecoverPage(c.Generate().Assets(c.Request().Name()), err)))
+			err = c.Response().Html(gox.Render(devtool.Recover(c.Generate().Assets(c.Request().Name()), err)))
 		}
 		if !env.Development() || isHx {
 			err = h.core.dynamicHandler(c)

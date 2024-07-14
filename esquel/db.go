@@ -15,6 +15,7 @@ type DB struct {
 	rollback    bool
 	log         bool
 	timeout     time.Duration
+	logFunc     func(time string, query string, args []any)
 }
 
 const (
@@ -46,10 +47,7 @@ func (d *DB) DriverName() string {
 	return d.driverName
 }
 
-func (d *DB) Log(use ...bool) {
-	l := true
-	if len(use) > 0 {
-		l = use[0]
-	}
-	d.log = l
+func (d *DB) Log(logFunc func(time string, query string, args []any)) *DB {
+	d.logFunc = logFunc
+	return d
 }

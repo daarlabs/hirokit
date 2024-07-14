@@ -73,6 +73,14 @@ func wordBreakClass(selector string, value string) string {
 	)
 }
 
+func whitespaceClass(selector string, value string) string {
+	return fmt.Sprintf(
+		`%s{white-space: %s;}`,
+		selector,
+		value,
+	)
+}
+
 func transformLineHeightKeyword(keyword string) string {
 	if keyword == "none" {
 		return "1"

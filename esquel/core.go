@@ -166,6 +166,9 @@ func (q *Esquel) exec(ctx context.Context, result ...any) error {
 }
 
 func (q *Esquel) afterQuery(t time.Time, query string, args []any) {
+	if q.logFunc != nil {
+		q.logFunc(time.Now().Sub(t).String(), query, args)
+	}
 	queryLog := createQueryLog(q.driverName, query, args...)
 	duration := time.Now().Sub(t)
 	for _, sub := range q.subscriptions {

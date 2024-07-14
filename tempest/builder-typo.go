@@ -56,6 +56,7 @@ type TypoClass interface {
 	LhRelax(modifiers ...Modifier) Tempest
 	LhLoose(modifiers ...Modifier) Tempest
 	BreakAll(modifiers ...Modifier) Tempest
+	Whitespace(value string, modifiers ...Modifier) Tempest
 }
 
 func (b *Builder) Text(name string, code int, modifiers ...Modifier) Tempest {
@@ -406,6 +407,17 @@ func (b *Builder) BreakAll(modifiers ...Modifier) Tempest {
 			prefix:    "break-all",
 			value:     "break-all",
 			fn:        wordBreakClass,
+			modifiers: modifiers,
+		},
+	)
+}
+
+func (b *Builder) Whitespace(value string, modifiers ...Modifier) Tempest {
+	return b.createStyle(
+		style{
+			prefix:    "whitespace-",
+			value:     value,
+			fn:        whitespaceClass,
 			modifiers: modifiers,
 		},
 	)

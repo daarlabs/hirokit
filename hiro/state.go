@@ -11,6 +11,7 @@ import (
 )
 
 type State interface {
+	Token() string
 	Get(key string, target any) error
 	Save(key string, value any) error
 	
@@ -59,6 +60,10 @@ func createState(cache cache.Client, cookie cookie.Cookie) *state {
 		s.cleanComponents()
 	}
 	return s
+}
+
+func (s *state) Token() string {
+	return s.token
 }
 
 func (s *state) Get(key string, target any) error {

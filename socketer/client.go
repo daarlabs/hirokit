@@ -3,13 +3,13 @@ package socketer
 import (
 	"bytes"
 	"time"
-
+	
 	"github.com/gorilla/websocket"
 )
 
 type Client interface {
 	Write(bytes []byte) error
-
+	
 	MustWrite(bytes []byte)
 }
 
@@ -18,7 +18,8 @@ type client struct {
 	hub    *hub
 	conn   *websocket.Conn
 	write  chan []byte
-	id     int
+	id     string
+	closed bool
 }
 
 const (
@@ -32,7 +33,7 @@ var (
 	space   = []byte{' '}
 )
 
-func createClient(config Config, hub *hub, conn *websocket.Conn, id int) *client {
+func createClient(config Config, hub *hub, conn *websocket.Conn, id string) *client {
 	return &client{
 		config: config,
 		hub:    hub,
@@ -121,6 +122,10 @@ func (c *client) checkWithLen(_ int, err error) {
 }
 
 func (c *client) close() {
+	if c.closed {
+		return
+	}
+	c.closed = true
 	if err := c.conn.Close(); err != nil {
 		panic(err)
 	}

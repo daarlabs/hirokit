@@ -2,9 +2,13 @@ package hiro
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"sync"
+	"time"
 	
+	"github.com/daarlabs/hirokit/env"
 	"github.com/daarlabs/hirokit/esquel"
 	"github.com/daarlabs/hirokit/filesystem"
 	"github.com/daarlabs/hirokit/logger"
@@ -28,6 +32,7 @@ type Ctx interface {
 	Create() Factory
 	Csrf() csrf.Csrf
 	DB(dbname ...string) *esquel.DB
+	Dev() Dev
 	Email() mailer.Mailer
 	Export() Export
 	Files() filesystem.Client
@@ -46,6 +51,7 @@ type Ctx interface {
 type ctx struct {
 	context.Context
 	err              error
+	dev              *devManager
 	cachedComponents *map[string]MandatoryComponent
 	config           config.Config
 	cookie           cookie.Cookie
@@ -64,6 +70,7 @@ type ctx struct {
 	component        *componentCtx
 	write            *bool
 	parsed           Map
+	time             time.Time
 }
 
 type ctxParam struct {
@@ -82,6 +89,7 @@ func createContext(p ctxParam) *ctx {
 	write := true
 	c := &ctx{
 		Context:          cx,
+		dev:              createDev(),
 		cachedComponents: p.cachedComponents,
 		config:           p.config,
 		files:            filesystem.New(cx, p.config.Filesystem),
@@ -94,6 +102,7 @@ func createContext(p ctxParam) *ctx {
 		assets:           p.assets,
 		write:            &write,
 		parsed:           make(Map),
+		time:             time.Now(),
 	}
 	c.cookie = cookie.New(c.r, c.w, c.createCookiePathBasedOnRouterCookiePrefix())
 	if c.config.Security.Csrf != nil && c.config.Security.Csrf.IsEnabled() {
@@ -174,7 +183,17 @@ func (c *ctx) DB(dbname ...string) *esquel.DB {
 	if !ok {
 		panic(ErrorInvalidDatabase)
 	}
+	if env.Development() {
+		dbCopy := new(esquel.DB)
+		*dbCopy = *db
+		c.createDatabaseLogFunc(dbCopy)
+		return dbCopy
+	}
 	return db
+}
+
+func (c *ctx) Dev() Dev {
+	return c.dev
 }
 
 func (c *ctx) Email() mailer.Mailer {
@@ -251,4 +270,23 @@ func (c *ctx) parsePathValues() {
 	for _, pathValueKey := range c.route.PathValues {
 		c.parsed[pathValueKey] = c.r.PathValue(pathValueKey)
 	}
+}
+
+func (c *ctx) createDatabaseLogFunc(db *esquel.DB) {
+	db.Log(
+		func(time string, query string, args []any) {
+			for i, arg := range args {
+				if arg == nil {
+					continue
+				}
+				switch av := arg.(type) {
+				case string:
+					query = strings.Replace(query, fmt.Sprintf("$%d", i+1), "'"+av+"'", 1)
+				default:
+					query = strings.Replace(query, fmt.Sprintf("$%d", i+1), fmt.Sprint(av), 1)
+				}
+			}
+			c.dev.query = append(c.dev.query, fmt.Sprintf("%s/%s", time, query))
+		},
+	)
 }

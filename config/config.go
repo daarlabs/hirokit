@@ -12,6 +12,7 @@ type Config struct {
 	App          App
 	Cache        Cache
 	Database     map[string]*esquel.DB
+	Dev          Dev
 	Export       Export
 	Form         form.Config
 	Filesystem   filesystem.Config
