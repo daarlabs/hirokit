@@ -66,12 +66,26 @@ func HandleRequest(ws socketer.Ws, cache *sync.Map) http.HandlerFunc {
 			StatusCode: statusCode,
 			Plugin:     make(map[string][]string),
 		}
-		for key := range ToolConfig.Plugin {
+		for key, plugin := range ToolConfig.Plugin {
 			if v, ok := r.URL.Query()[key]; ok && len(v) > 0 {
 				if _, pluginExists := props.Plugin[key]; !pluginExists {
 					props.Plugin[key] = make([]string, 0)
 				}
-				props.Plugin[key] = v
+				if !plugin.Reference {
+					props.Plugin[key] = v
+				}
+				if plugin.Reference {
+					rows := make([]string, 0)
+					for _, referenceKey := range v {
+						if rv, rok := r.URL.Query()[referenceKey]; rok && len(rv) > 0 {
+							for i, item := range rv {
+								rv[i] = referenceKey + "/" + item
+							}
+							rows = append(rows, rv...)
+						}
+					}
+					props.Plugin[key] = rows
+				}
 			}
 		}
 		cache.Store(id, props)

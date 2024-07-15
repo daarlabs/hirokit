@@ -16,5 +16,5 @@ const (
 )
 
 const (
-	requestName = "devtool"
+	DynamicStyle = "devtool-dynamic-style"
 )

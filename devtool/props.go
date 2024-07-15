@@ -5,5 +5,6 @@ type Props struct {
 	Name       string
 	StatusCode int
 	RenderTime int
+	Param      map[string]any
 	Plugin     map[string][]string
 }

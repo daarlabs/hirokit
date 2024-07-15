@@ -7,7 +7,6 @@ import (
 	
 	"golang.org/x/exp/maps"
 	
-	"github.com/daarlabs/farah/ui/icon_ui"
 	"github.com/daarlabs/hirokit/alpine"
 	. "github.com/daarlabs/hirokit/gox"
 	"github.com/daarlabs/hirokit/hx"
@@ -24,6 +23,7 @@ func createTool(assetsId string, props Props) Node {
 				Name("viewport"),
 				Content("width=device-width, initial-scale=1"),
 			),
+			Link(Rel("icon"), Type("image/png"), Href("/.dev/static/favicon.png")),
 			Link(Rel("stylesheet"), Type("text/css"), Href(fmt.Sprintf("/.dev/.tempest/styles.%s.css", assetsId))),
 			Script(Defer(), Src(fmt.Sprintf("/.dev/.tempest/scripts.%s.js", assetsId))),
 		),
@@ -55,8 +55,10 @@ func createDevtoolContent(props Props) Node {
 		alpine.Data(
 			map[string]any{
 				"active": active,
+				"plugin": maps.Keys(props.Plugin),
 			},
 		),
+		alpine.Init("const storedActive = window.localStorage.getItem('x-dev-active-tab'); active = plugin.includes(storedActive) ? storedActive : active"),
 		Id(RequestId),
 		tempest.Class().H("screen").Flex().FlexCol().Overflow("hidden").TextXs(),
 		Div(
@@ -76,15 +78,26 @@ func createDevtoolContent(props Props) Node {
 						alpine.Show(fmt.Sprintf("active === '%s'", pluginKey)),
 						Range(
 							values, func(item string, _ int) Node {
+								value := item
 								return Div(
-									tempest.Class().Name(requestName).BorderB(1).BorderSlate(600).P(4).BreakAll().Whitespace("pre-wrap"),
+									tempest.Class().Name(DynamicStyle).BorderB(1).BorderSlate(600).P(4).BreakAll().Whitespace("pre-wrap"),
 									If(
 										plugin.RowFunc == nil,
-										Text(item),
+										If(!plugin.Reference, Text(value)),
+										If(
+											plugin.Reference, func() Node {
+												return Text(value)
+											}(),
+										),
 									),
 									If(
 										plugin.RowFunc != nil,
-										plugin.RowFunc(item),
+										If(!plugin.Reference, plugin.RowFunc(value)),
+										If(
+											plugin.Reference, func() Node {
+												return plugin.RowFunc(value)
+											}(),
+										),
 									),
 								)
 							},
@@ -108,23 +121,24 @@ func createDevtoolContent(props Props) Node {
 							return Fragment()
 						}
 						return Button(
-							tempest.Class().Name(requestName).TextWhite().Border(1).Rounded().Px(2).H(8).Grid().PlaceItemsCenter().TextCenter(),
+							tempest.Class().Name(DynamicStyle).TextWhite().Border(1).Rounded().Px(2).H(8).Grid().PlaceItemsCenter().TextCenter(),
 							Type("button"),
-							alpine.Click("active = '"+pluginKey+"'"),
+							alpine.Click("active = '"+pluginKey+"'; window.localStorage.setItem('x-dev-active-tab', active)"),
 							alpine.Class(
 								map[string]string{
-									tempest.Class().Name(requestName).BgBlue(500).BorderBlue(500).String(): fmt.Sprintf(
+									tempest.Class().Name(DynamicStyle).BgBlue(500).BorderBlue(500).String(): fmt.Sprintf(
 										"active === \"%s\"", pluginKey,
 									),
-									tempest.Class().Name(requestName).BgTransparent().BorderSlate(500).String(): fmt.Sprintf(
+									tempest.Class().Name(DynamicStyle).BgTransparent().BorderSlate(500).String(): fmt.Sprintf(
 										"active !== \"%s\"", pluginKey,
 									),
 								},
 							),
 							If(
 								plugin.IconPath != nil,
-								icon_ui.CreateIcon(
-									tempest.Class().Transition().FillCurrent().Size(4),
+								Svg(
+									ViewBox("0 0 24 24"),
+									tempest.Class().Name(DynamicStyle).Transition().FillCurrent().Size(4),
 									plugin.IconPath,
 								),
 							),
@@ -170,7 +184,8 @@ func createDevtoolContent(props Props) Node {
 			),
 		),
 		Style(
-			Raw(tempest.NamedStyles(requestName)),
+			Element(),
+			Raw(tempest.NamedStyles(DynamicStyle)),
 		),
 	)
 }

@@ -1,9 +1,11 @@
 package devtool
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 )
 
 func Refresh() {
@@ -22,6 +24,23 @@ func Push(id string, props Props) error {
 	for key, values := range props.Plugin {
 		for _, value := range values {
 			q.Add(key, value)
+		}
+	}
+	qp := make([]string, 0)
+	for key, value := range props.Param {
+		if !slices.Contains(qp, key) {
+			q.Add(PluginParam, key)
+			qp = append(qp, key)
+		}
+		switch v := value.(type) {
+		case []string:
+			for _, item := range v {
+				valueBytes, err := json.Marshal(item)
+				if err != nil {
+					continue
+				}
+				q.Set(key, string(valueBytes))
+			}
 		}
 	}
 	q.Add("path", props.Path)

@@ -3,6 +3,7 @@ package hiro
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 	
@@ -61,8 +62,12 @@ func devtoolPush(c *ctx) {
 			"Id/" + fmt.Sprint(session.Id),
 			"Email/" + session.Email,
 			"Roles/" + strings.Join(session.Roles, ", "),
+			"Ip/" + session.Ip,
+			"UserAgent/" + session.UserAgent,
 		}
 	}
+	param := c.Request().QueryMap()
+	maps.Copy(param, c.Request().PathMap())
 	if err := devtool.Push(
 		c.State().Token(),
 		devtool.Props{
@@ -70,6 +75,7 @@ func devtoolPush(c *ctx) {
 			Name:       c.Request().Name(),
 			RenderTime: int(time.Now().Sub(c.time).Milliseconds()),
 			StatusCode: c.response.StatusCode,
+			Param:      param,
 			Plugin:     plugin,
 		},
 	); err != nil {

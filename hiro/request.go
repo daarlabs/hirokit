@@ -26,6 +26,7 @@ type Request interface {
 	PathValue(key string, defaultValue ...string) string
 	QueryParam(key string, defaultValue ...string) string
 	QueryMap() Map
+	PathMap() Map
 	Protocol() string
 	Raw() *http.Request
 	UserAgent() string
@@ -128,6 +129,14 @@ func (r request) PathValue(key string, defaultValue ...string) string {
 		return defaultValue[0]
 	}
 	return value
+}
+
+func (r request) PathMap() Map {
+	result := make(Map)
+	for _, key := range r.route.PathValues {
+		result[key] = r.PathValue(key)
+	}
+	return result
 }
 
 func (r request) QueryParam(key string, defaultValue ...string) string {
