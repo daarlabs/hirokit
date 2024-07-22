@@ -133,6 +133,9 @@ func (r request) PathValue(key string, defaultValue ...string) string {
 
 func (r request) PathMap() Map {
 	result := make(Map)
+	if r.route == nil {
+		return result
+	}
 	for _, key := range r.route.PathValues {
 		result[key] = r.PathValue(key)
 	}

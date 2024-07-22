@@ -42,14 +42,14 @@ a:not(.underline) {
 
 [x-cloak] { display: none !important; }
 
-.indicator {
+.htmx-indicator, .form-indicator, .link-indicator {
 	visibility: hidden;
 	opacity: 0;
 }
 
-.htmx-request .indicator, .htmx-request.indicator, .htmx-request ~ .indicator,
-.form-request .indicator, .form-request.indicator,
-.link-request .indicator, .link-request.indicator, .link-request ~ .indicator {
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator, .htmx-request ~ .htmx-indicator,
+.form-request .form-indicator, .form-request.form-indicator,
+.link-request .link-indicator, .link-request.link-indicator, .link-request ~ .link-indicator {
 	visibility: visible;
 	opacity: 1;
 }

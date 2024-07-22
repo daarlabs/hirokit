@@ -12,12 +12,16 @@ import (
 const (
 	requestTypeForm = iota
 	requestTypeMultipartForm
+	requestTypeQuery
 )
 
 func processRequest(req *http.Request, limit int) (url.Values, map[string][]*multipart.FileHeader, error) {
 	requestType, err := ParseForm(req, limit)
 	if err != nil {
 		return createEmptyProcessRequestResult(err)
+	}
+	if requestType == requestTypeQuery {
+		return req.URL.Query(), make(map[string][]*multipart.FileHeader), nil
 	}
 	if requestType == requestTypeMultipartForm {
 		return req.MultipartForm.Value, req.MultipartForm.File, nil
@@ -140,7 +144,7 @@ func ParseForm(req *http.Request, limit int) (int, error) {
 	isForm := isRequestForm(req)
 	isMultipartForm := isRequestMultipartForm(req)
 	if !isForm && !isMultipartForm {
-		return -1, nil
+		return requestTypeQuery, nil
 	}
 	if isMultipartForm {
 		if err := req.ParseMultipartForm(int64(limit) << 20); err != nil {

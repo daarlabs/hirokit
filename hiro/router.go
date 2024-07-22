@@ -33,7 +33,7 @@ type router struct {
 }
 
 const (
-	paramRegex = `\S+`
+	paramRegex = `[^/\s]+`
 )
 
 const (

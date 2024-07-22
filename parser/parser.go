@@ -80,7 +80,7 @@ func (p *Parser) MustQuery(key string, target any) {
 func (p *Parser) PathValue(key string, target any) error {
 	pathValue := p.r.PathValue(key)
 	if len(pathValue) == 0 {
-		return ErrorPathValueMissing
+		return errors.Join(ErrorPathValueMissing, errors.New(key))
 	}
 	if err := convertx.ConvertValue(pathValue, target); err != nil {
 		return err

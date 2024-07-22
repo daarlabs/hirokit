@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"slices"
 	"strings"
 	
+	"golang.org/x/exp/maps"
+	
 	"github.com/daarlabs/hirokit/gox"
+	"github.com/daarlabs/hirokit/util/escapex"
 	"github.com/daarlabs/hirokit/util/pathx"
 	
 	"github.com/daarlabs/hirokit/csrf"
@@ -73,7 +77,11 @@ func (g *generator) Action(name string, args ...Map) string {
 	}
 	qpm := Map{Action: createDividedName(g.route.Name, g.component.name, name)}
 	parsed := g.Request().Parsed()
+	pathMapKeys := maps.Keys(g.Request().PathMap())
 	for k, v := range parsed {
+		if slices.Contains(pathMapKeys, k) {
+			continue
+		}
 		qpm[k] = v
 	}
 	if len(args) > 0 {
@@ -90,14 +98,19 @@ func (g *generator) Action(name string, args ...Map) string {
 
 func (g *generator) Current(qpm ...Map) string {
 	qp := make(Map)
-	if len(qpm) > 0 {
-		qp = qpm[0]
-	}
 	for k, v := range g.Request().Raw().URL.Query() {
 		if k == Action || k == langQueryKey {
 			continue
 		}
 		qp[k] = v
+	}
+	if len(qpm) > 0 {
+		for k, v := range qpm[0] {
+			if k == Action || k == langQueryKey {
+				continue
+			}
+			qp[k] = v
+		}
 	}
 	return g.proxyPathIfExists(g.ensurePathEndSlash(g.Request().Path())) + g.Query(qp)
 }
@@ -145,10 +158,11 @@ func (g *generator) Query(args Map) string {
 		switch vv.Kind() {
 		case reflect.Slice:
 			for i := 0; i < vv.Len(); i++ {
-				result = append(result, fmt.Sprintf("%s=%v", k, vv.Index(i).Interface()))
+				result = append(result, fmt.Sprintf("%s=%v", k, escapex.Url(fmt.Sprint(vv.Index(i).Interface()))))
 			}
 		default:
-			result = append(result, fmt.Sprintf("%s=%v", k, v))
+			
+			result = append(result, fmt.Sprintf("%s=%s", k, escapex.Url(fmt.Sprint(v))))
 		}
 	}
 	if len(result) == 0 {

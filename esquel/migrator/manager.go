@@ -18,6 +18,6 @@ func (m *Manager) Add() *Migration {
 	return mig
 }
 
-func (m *Manager) GetAll() []*Migration {
+func (m *Manager) Collect() []*Migration {
 	return m.migrations
 }

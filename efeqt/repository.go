@@ -15,8 +15,6 @@ type repository[E entity] struct {
 	entity *E
 }
 
-type result interface{}
-
 func Repository[E entity](db *esquel.DB) RepositoryManager[E] {
 	return &repository[E]{
 		db:     db,

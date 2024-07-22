@@ -44,7 +44,7 @@ const (
 )
 
 const (
-	Version = "0.1.2"
+	Version = "0.1.9"
 )
 
 func New(cfg config.Config) Hiro {

@@ -16,26 +16,26 @@ type Dyna interface {
 	DB(db *esquel.DB, query Query) Dyna
 	Data(data []map[string]any) Dyna
 	
-	GetAllFunc(fn func(param Param, t any) error) Dyna
-	GetOneFunc(fn func(name string, v any, t any) error) Dyna
-	GetManyFunc(fn func(name string, v any, t any) error) Dyna
+	FindFunc(fn func(param Param, t any) error) Dyna
+	FindOneFunc(fn func(name string, v any, t any) error) Dyna
+	FindManyFunc(fn func(name string, v any, t any) error) Dyna
 	
-	GetAll(param Param, t any) error
-	GetOne(name string, v any, t any) error
-	GetMany(name string, v any, t any) error
+	Find(param Param, t any) error
+	FindOne(name string, v any, t any) error
+	FindMany(name string, v any, t any) error
 	
-	MustGetAll(param Param, t any)
-	MustGetOne(name string, v any, t any)
-	MustGetMany(name string, v any, t any)
+	MustFind(param Param, t any)
+	MustFindOne(name string, v any, t any)
+	MustFindMany(name string, v any, t any)
 }
 
 type dyna struct {
-	db          *esquel.DB
-	data        []map[string]any
-	query       Query
-	getAllFunc  func(param Param, t any) error
-	getOneFunc  func(name string, v any, t any) error
-	getManyFunc func(name string, v any, t any) error
+	db           *esquel.DB
+	data         []map[string]any
+	query        Query
+	findFunc     func(param Param, t any) error
+	findOneFunc  func(name string, v any, t any) error
+	findManyFunc func(name string, v any, t any) error
 }
 
 func New() Dyna {
@@ -55,73 +55,73 @@ func (d *dyna) Data(data []map[string]any) Dyna {
 	return d
 }
 
-func (d *dyna) GetAllFunc(fn func(param Param, t any) error) Dyna {
-	d.getAllFunc = fn
+func (d *dyna) FindFunc(fn func(param Param, t any) error) Dyna {
+	d.findFunc = fn
 	return d
 }
 
-func (d *dyna) GetOneFunc(fn func(name string, v any, t any) error) Dyna {
-	d.getOneFunc = fn
+func (d *dyna) FindOneFunc(fn func(name string, v any, t any) error) Dyna {
+	d.findOneFunc = fn
 	return d
 }
 
-func (d *dyna) GetManyFunc(fn func(name string, v any, t any) error) Dyna {
-	d.getManyFunc = fn
+func (d *dyna) FindManyFunc(fn func(name string, v any, t any) error) Dyna {
+	d.findManyFunc = fn
 	return d
 }
 
-func (d *dyna) GetAll(param Param, t any) error {
+func (d *dyna) Find(param Param, t any) error {
 	if param.Limit == 0 {
 		param.Limit = DefaultLimit
 	}
-	if d.getAllFunc != nil {
-		return d.getAllFunc(param, t)
+	if d.findFunc != nil {
+		return d.findFunc(param, t)
 	}
 	if d.shouldUseDb() {
-		return d.getAllWithDb(param, t)
+		return d.findWithDb(param, t)
 	}
-	return d.getAllWithData(param, t)
+	return d.findWithData(param, t)
 }
 
-func (d *dyna) GetOne(name string, v any, t any) error {
-	if d.getOneFunc != nil {
-		return d.getOneFunc(name, v, t)
+func (d *dyna) FindOne(name string, v any, t any) error {
+	if d.findOneFunc != nil {
+		return d.findOneFunc(name, v, t)
 	}
 	if d.shouldUseDb() {
-		return d.getOneWithDb(name, v, t)
+		return d.findOneWithDb(name, v, t)
 	}
-	return d.getOneWithData(name, v, t)
+	return d.findOneWithData(name, v, t)
 }
 
-func (d *dyna) GetMany(name string, v any, t any) error {
-	if d.getManyFunc != nil {
-		return d.getManyFunc(name, v, t)
+func (d *dyna) FindMany(name string, v any, t any) error {
+	if d.findManyFunc != nil {
+		return d.findManyFunc(name, v, t)
 	}
 	if d.shouldUseDb() {
-		return d.getManyWithDb(name, v, t)
+		return d.findManyWithDb(name, v, t)
 	}
-	return d.getManyWithData(name, v, t)
+	return d.findManyWithData(name, v, t)
 }
 
-func (d *dyna) MustGetAll(param Param, t any) {
-	if err := d.GetAll(param, t); err != nil {
+func (d *dyna) MustFind(param Param, t any) {
+	if err := d.Find(param, t); err != nil {
 		panic(err)
 	}
 }
 
-func (d *dyna) MustGetOne(name string, v any, t any) {
-	if err := d.GetOne(name, v, t); err != nil {
+func (d *dyna) MustFindOne(name string, v any, t any) {
+	if err := d.FindOne(name, v, t); err != nil {
 		panic(err)
 	}
 }
 
-func (d *dyna) MustGetMany(name string, v any, t any) {
-	if err := d.GetMany(name, v, t); err != nil {
+func (d *dyna) MustFindMany(name string, v any, t any) {
+	if err := d.FindMany(name, v, t); err != nil {
 		panic(err)
 	}
 }
 
-func (d *dyna) getAllWithDb(param Param, t any) error {
+func (d *dyna) findWithDb(param Param, t any) error {
 	q := d.db.Q("SELECT " + d.createFields()).
 		Q(`FROM ` + d.query.Table).
 		Q(`AS ` + d.query.Alias)
@@ -129,7 +129,7 @@ func (d *dyna) getAllWithDb(param Param, t any) error {
 	return q.Exec(t)
 }
 
-func (d *dyna) getAllWithData(param Param, t any) error {
+func (d *dyna) findWithData(param Param, t any) error {
 	result := make([]map[string]any, 0)
 	for i, row := range d.data {
 		if param.Offset != 0 && i < param.Offset {
@@ -191,7 +191,7 @@ func (d *dyna) sortDataResult(param Param, data []map[string]any) {
 	)
 }
 
-func (d *dyna) getOneWithDb(name string, v any, t any) error {
+func (d *dyna) findOneWithDb(name string, v any, t any) error {
 	fields := make([]string, 0)
 	for alias, key := range d.query.Fields {
 		fields = append(fields, key+" AS "+alias)
@@ -203,7 +203,7 @@ func (d *dyna) getOneWithDb(name string, v any, t any) error {
 	return q.Exec(t)
 }
 
-func (d *dyna) getOneWithData(name string, v any, t any) error {
+func (d *dyna) findOneWithData(name string, v any, t any) error {
 	for _, row := range d.data {
 		rv, ok := row[name]
 		if !ok {
@@ -224,7 +224,7 @@ func (d *dyna) getOneWithData(name string, v any, t any) error {
 	return nil
 }
 
-func (d *dyna) getManyWithDb(name string, v any, t any) error {
+func (d *dyna) findManyWithDb(name string, v any, t any) error {
 	vv := reflect.ValueOf(v)
 	if vv.Kind() != reflect.Slice {
 		return ErrorSliceValue
@@ -236,7 +236,7 @@ func (d *dyna) getManyWithDb(name string, v any, t any) error {
 	return q.Exec(t)
 }
 
-func (d *dyna) getManyWithData(name string, v any, t any) error {
+func (d *dyna) findManyWithData(name string, v any, t any) error {
 	vv := reflect.ValueOf(v)
 	if vv.Kind() != reflect.Slice {
 		return ErrorSliceValue

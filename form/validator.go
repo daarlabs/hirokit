@@ -25,6 +25,7 @@ const (
 	validatorTypeMax
 	validatorTypeEmail
 	validatorTypeCustom
+	validatorTypeNone
 )
 
 func CreateValidator[T any](pattern string) func(value ...T) Validator {
@@ -43,7 +44,12 @@ func CreateValidator[T any](pattern string) func(value ...T) Validator {
 
 var Validate = Validators{}
 
-func (v Validators) Required() Validator {
+func (v Validators) Required(required ...bool) Validator {
+	if len(required) > 0 && !required[0] {
+		return validator{
+			validatorType: validatorTypeNone,
+		}
+	}
 	return validator{
 		validatorType: validatorTypeRequired,
 	}
