@@ -73,7 +73,7 @@ func (p *Parser) Query(key string, target any) error {
 func (p *Parser) MustQuery(key string, target any) {
 	err := p.Query(key, target)
 	if err != nil {
-		panic(err)
+		panic(errors.New("invalid query parameter: " + key))
 	}
 }
 
@@ -91,7 +91,7 @@ func (p *Parser) PathValue(key string, target any) error {
 func (p *Parser) MustPathValue(key string, target any) {
 	err := p.PathValue(key, target)
 	if err != nil {
-		panic(err)
+		panic(errors.New("invalid path value: " + key))
 	}
 }
 

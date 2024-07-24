@@ -25,42 +25,59 @@ type handler struct {
 
 func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var writer http.ResponseWriter
 		isTempest := strings.HasPrefix(r.URL.Path, tempestAssetsPath)
 		compressedWriter := createCompressedWriter(w)
 		matchedRoute := h.matchRoute(r.URL.Path)
+		isWs := matchedRoute != nil && matchedRoute.Ws != nil
+		if !isWs {
+			writer = compressedWriter
+		}
+		if isWs {
+			writer = w
+		}
 		c := createContext(
 			ctxParam{
 				assets:       h.core.assets,
 				config:       h.core.router.config,
 				layout:       h.core.layout,
 				r:            r,
-				w:            compressedWriter,
+				w:            writer,
 				matchedRoute: matchedRoute,
 				routes:       h.core.router.routes,
 			},
 		)
-		defer func(c *ctx) {
-			if err := compressedWriter.Writer.Close(); err != nil {
-				c.err = err
-			}
-		}(c)
+		if !isWs {
+			defer func(c *ctx) {
+				if err := compressedWriter.Writer.Close(); err != nil {
+					c.err = err
+				}
+			}(c)
+		}
 		if h.core.router.config.Router.Recover {
 			defer h.createRecover(c)
 		}
 		if !isTempest {
 			for _, middleware := range h.applyInternalMiddlewares(matchedRoute, h.core.router.middlewares) {
 				c.err = middleware(c)
-				if c.err != nil {
+				if c.err != nil && !isWs {
 					h.createResponse(c)
 					return
 				}
+				if c.err != nil && isWs {
+					panic(c.err)
+				}
 			}
 		}
-		if len(c.response.DataType) == 0 {
+		if len(c.response.DataType) == 0 && fn != nil {
 			err := fn(c)
 			if err != nil {
 				c.err = err
 			}
+		}
+		if isWs {
+			h.upgradeResponse(c, writer, r, matchedRoute)
+			return
 		}
 		if env.Development() && !isTempest && h.core.config.Dev.Tool {
 			devtoolPush(c)
@@ -83,6 +100,18 @@ func (h handler) applyInternalMiddlewares(matchedRoute *Route, middlewares []Han
 	}
 	r = append(r, middlewares...)
 	return r
+}
+
+func (h handler) upgradeResponse(c *ctx, w http.ResponseWriter, r *http.Request, matchedRoute *Route) {
+	var clientId string
+	sessionExists := c.Auth().Session().MustExists()
+	if !sessionExists {
+		clientId = fmt.Sprint(c.Auth().Session().MustGet().Id)
+	}
+	if sessionExists {
+		clientId = fmt.Sprint(c.Auth().Session().MustGet().Id)
+	}
+	matchedRoute.Ws.MustUpgrade(r, w, clientId)
 }
 
 func (h handler) createResponse(c *ctx) {

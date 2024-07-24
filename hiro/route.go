@@ -4,6 +4,7 @@ import (
 	"regexp"
 	
 	"github.com/daarlabs/hirokit/firewall"
+	"github.com/daarlabs/hirokit/socketer"
 )
 
 type RouteConfig struct {
@@ -20,12 +21,14 @@ type Route struct {
 	Methods    []string
 	Firewall   []firewall.Firewall
 	PathValues []string
+	Ws         socketer.Ws
 }
 
 const (
 	routeMethod = iota
 	routeName
 	routeLayout
+	routeWs
 )
 
 func Method(method ...string) RouteConfig {

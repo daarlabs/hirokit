@@ -2,6 +2,7 @@ package hiro
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/daarlabs/hirokit/esquel"
 	"github.com/daarlabs/hirokit/filesystem"
 	"github.com/daarlabs/hirokit/logger"
+	"github.com/daarlabs/hirokit/socketer"
 	
 	"github.com/daarlabs/hirokit/auth"
 	"github.com/daarlabs/hirokit/cache"
@@ -46,6 +48,7 @@ type Ctx interface {
 	Response() Response
 	State() State
 	Translate(key string, args ...map[string]any) string
+	Ws(name string) *Ws
 }
 
 type ctx struct {
@@ -71,6 +74,7 @@ type ctx struct {
 	write            *bool
 	parsed           Map
 	time             time.Time
+	ws               socketer.Ws
 }
 
 type ctxParam struct {
@@ -123,6 +127,9 @@ func createContext(p ctxParam) *ctx {
 	}
 	c.state = createState(c.Cache(), c.Cookie())
 	c.parsePathValues()
+	if p.matchedRoute != nil && p.matchedRoute.Ws != nil {
+		c.ws = p.matchedRoute.Ws
+	}
 	return c
 }
 
@@ -254,6 +261,15 @@ func (c *ctx) Translate(key string, args ...map[string]any) string {
 		return key
 	}
 	return c.config.Localization.Translator.Translate(c.Lang().Current(), key, args...)
+}
+
+func (c *ctx) Ws(name string) *Ws {
+	for _, route := range *c.routes {
+		if route.Name == name {
+			return &Ws{ws: route.Ws}
+		}
+	}
+	panic(errors.New(fmt.Sprintf("websocket %s not found", name)))
 }
 
 func (c *ctx) createCookiePathBasedOnRouterCookiePrefix() string {

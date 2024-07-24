@@ -6,6 +6,7 @@ import (
 	"github.com/daarlabs/hirokit/form"
 	"github.com/daarlabs/hirokit/logger"
 	"github.com/daarlabs/hirokit/mailer"
+	"github.com/daarlabs/hirokit/socketer"
 )
 
 type Config struct {
@@ -22,6 +23,7 @@ type Config struct {
 	Router       Router
 	Security     Security
 	Smtp         mailer.Config
+	Ws           socketer.Config
 }
 
 func (c Config) Init() Config {

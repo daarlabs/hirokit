@@ -23,7 +23,7 @@ func HandleConnection(ws socketer.Ws) http.HandlerFunc {
 			http.Error(w, "id is required", http.StatusBadRequest)
 			return
 		}
-		if err := ws.Serve(r, w, id); err != nil {
+		if err := ws.Upgrade(r, w, id); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

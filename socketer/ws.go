@@ -12,12 +12,12 @@ type Ws interface {
 	Broadcast(bytes []byte)
 	Find(id ...string) ([]Client, error)
 	FindOne(id string) (Client, error)
-	Serve(req *http.Request, res http.ResponseWriter, id string) error
+	Upgrade(req *http.Request, res http.ResponseWriter, id string) error
 	OnRead(fn func(bytes []byte)) Ws
 	
 	MustFind(id ...string) []Client
 	MustFindOne(id string) Client
-	MustServe(req *http.Request, res http.ResponseWriter, id string)
+	MustUpgrade(req *http.Request, res http.ResponseWriter, id string)
 }
 
 type ws struct {
@@ -28,12 +28,20 @@ type ws struct {
 }
 
 func New(config ...Config) Ws {
-	var cfg Config
-	if len(config) == 0 {
-		cfg = defaultConfig
-	}
+	cfg := defaultConfig
 	if len(config) > 0 {
-		cfg = config[0]
+		if config[0].ReadBufferSize > 0 {
+			cfg.ReadBufferSize = config[0].ReadBufferSize
+		}
+		if config[0].WriteBufferSize > 0 {
+			cfg.WriteBufferSize = config[0].WriteBufferSize
+		}
+		if config[0].ReadLimit > 0 {
+			cfg.ReadLimit = config[0].ReadLimit
+		}
+		if config[0].WriteLimit > 0 {
+			cfg.WriteLimit = config[0].WriteLimit
+		}
 	}
 	h := createHub()
 	go h.run()
@@ -91,7 +99,7 @@ func (s *ws) OnRead(fn func(bytes []byte)) Ws {
 	return s
 }
 
-func (s *ws) Serve(req *http.Request, res http.ResponseWriter, id string) error {
+func (s *ws) Upgrade(req *http.Request, res http.ResponseWriter, id string) error {
 	conn, err := s.upgrader.Upgrade(res, req, nil)
 	if err != nil {
 		return err
@@ -123,8 +131,8 @@ func (s *ws) Serve(req *http.Request, res http.ResponseWriter, id string) error 
 	return nil
 }
 
-func (s *ws) MustServe(req *http.Request, res http.ResponseWriter, id string) {
-	err := s.Serve(req, res, id)
+func (s *ws) MustUpgrade(req *http.Request, res http.ResponseWriter, id string) {
+	err := s.Upgrade(req, res, id)
 	if err != nil {
 		panic(err)
 	}

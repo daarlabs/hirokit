@@ -11,6 +11,7 @@ import (
 	"github.com/daarlabs/hirokit/constant/fileSuffix"
 	"github.com/daarlabs/hirokit/constant/header"
 	"github.com/daarlabs/hirokit/firewall"
+	"github.com/daarlabs/hirokit/socketer"
 	"github.com/daarlabs/hirokit/tempest"
 	"github.com/daarlabs/hirokit/util/pathx"
 )
@@ -19,6 +20,7 @@ type Router interface {
 	Use(handler ...Handler) Router
 	Static(path, dir string) Router
 	Route(path any, handler Handler, config ...RouteConfig) Router
+	Ws(path any, config ...RouteConfig) Router
 	Group(path any, name ...string) Router
 }
 
@@ -69,6 +71,11 @@ func (r *router) Route(path any, fn Handler, config ...RouteConfig) Router {
 			r.createCanonicalRoute(p, "", config...)
 		}
 	}
+	return r
+}
+
+func (r *router) Ws(path any, config ...RouteConfig) Router {
+	r.Route(path, nil, append(config, RouteConfig{Type: routeWs})...)
 	return r
 }
 
@@ -179,7 +186,8 @@ func (r *router) createCanonicalRoute(path string, lang string, config ...RouteC
 }
 
 func (r *router) createRoute(path string, fn Handler, lang string, config ...RouteConfig) {
-	var name, layout string
+	var name, layoutName string
+	var ws bool
 	methods := make([]string, 0)
 	for _, cfg := range config {
 		switch cfg.Type {
@@ -188,11 +196,14 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 		case routeName:
 			name = cfg.Value.(string)
 		case routeLayout:
-			layout = cfg.Value.(string)
+			layoutName = cfg.Value.(string)
+		case routeWs:
+			ws = true
+			methods = append(methods, http.MethodGet, http.MethodHead)
 		}
 	}
-	if len(layout) == 0 {
-		layout = Main
+	if len(layoutName) == 0 {
+		layoutName = Main
 	}
 	if len(methods) == 0 {
 		methods = append(methods, httpMethods...)
@@ -213,18 +224,20 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 		name = createDividedName(r.prefix.Name, name)
 	}
 	matcher, pathValues := r.createMatcher(path)
-	*r.routes = append(
-		*r.routes, &Route{
-			Lang:       lang,
-			Path:       path,
-			Name:       name,
-			Methods:    methods,
-			Layout:     r.core.layout.factories[layout],
-			Matcher:    matcher,
-			PathValues: pathValues,
-			Firewall:   r.createFirewall(path, name),
-		},
-	)
+	newRoute := &Route{
+		Lang:       lang,
+		Path:       path,
+		Name:       name,
+		Methods:    methods,
+		Layout:     r.core.layout.factories[layoutName],
+		Matcher:    matcher,
+		PathValues: pathValues,
+		Firewall:   r.createFirewall(path, name),
+	}
+	if ws {
+		newRoute.Ws = socketer.New(r.config.Ws)
+	}
+	*r.routes = append(*r.routes, newRoute)
 	for _, method := range methods {
 		r.mux.HandleFunc(
 			r.createRoutePattern(method, path),
