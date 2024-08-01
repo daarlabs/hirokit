@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 	
+	"github.com/iancoleman/strcase"
+	
 	"github.com/daarlabs/hirokit/env"
 	"github.com/daarlabs/hirokit/hx"
 	
@@ -211,7 +213,7 @@ func (r requestIs) Action(actionName ...string) bool {
 	action := r.r.URL.Query().Get(Action)
 	isAction := len(action) > 0
 	if isAction && len(actionName) > 0 && r.componentCtx != nil {
-		actionPrefix := r.route.Name + "_" + r.componentCtx.name
+		actionPrefix := strcase.ToKebab(r.route.Name) + "_" + strcase.ToKebab(r.componentCtx.name)
 		var equal bool
 		for _, an := range actionName {
 			if actionPrefix+"_"+an == action {

@@ -546,7 +546,7 @@ func Start(values ...int) Node {
 	return createAttribute(attributeStart, values...)
 }
 
-func Step(values ...int) Node {
+func Step(values ...string) Node {
 	return createAttribute(attributeStep, values...)
 }
 

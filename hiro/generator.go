@@ -87,7 +87,7 @@ func (g *generator) Action(name string, args ...Map) string {
 	if len(args) > 0 {
 		for k, v := range args[0] {
 			vv := reflect.ValueOf(v)
-			if vv.IsZero() {
+			if vv.IsZero() && vv.Type().Kind() == reflect.String {
 				continue
 			}
 			qpm[k] = v
