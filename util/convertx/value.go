@@ -46,6 +46,10 @@ func ConvertValue(src string, t interface{}) error {
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Bool:
+		if src == "on" {
+			tv.Elem().Set(reflect.ValueOf(true))
+			return nil
+		}
 		val, err := strconv.ParseBool(src)
 		if err != nil {
 			return err

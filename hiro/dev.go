@@ -57,13 +57,15 @@ func devtoolPush(c *ctx) {
 		devtool.PluginDebug:    c.dev.debug,
 	}
 	if c.Auth().Session().MustExists() {
-		session := c.Auth().Session().MustGet()
-		plugin[devtool.PluginSession] = []string{
-			"Id/" + fmt.Sprint(session.Id),
-			"Email/" + session.Email,
-			"Roles/" + strings.Join(session.Roles, ", "),
-			"Ip/" + session.Ip,
-			"UserAgent/" + session.UserAgent,
+		session, err := c.Auth().Session().Get()
+		if err == nil {
+			plugin[devtool.PluginSession] = []string{
+				"Id/" + fmt.Sprint(session.Id),
+				"Email/" + session.Email,
+				"Roles/" + strings.Join(session.Roles, ", "),
+				"Ip/" + session.Ip,
+				"UserAgent/" + session.UserAgent,
+			}
 		}
 	}
 	param := c.Request().QueryMap()

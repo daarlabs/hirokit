@@ -41,7 +41,7 @@ func (r *response) Status(statusCode int) Response {
 
 func (r *response) Render(nodes ...gox.Node) error {
 	isHx := r.ctx.Request().Is().Hx()
-	if !r.ctx.Request().Is().Get() && !isHx {
+	if r.ctx.Request().Is().Form() && !isHx {
 		return r.ctx.Response().Redirect(r.ctx.Generate().Current())
 	}
 	if r.route.Layout != nil && !isHx {

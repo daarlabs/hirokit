@@ -125,7 +125,7 @@ func latinize(value string) string {
 }
 
 func replaceSpecialCharacters(value string) string {
-	replacer := regexp.MustCompile(`[,-/#!$%^&*;:{}=\-_~()@]`)
+	replacer := regexp.MustCompile(`[,-/#$%^&;{}=\-_~()@]`)
 	marksReplacer := strings.NewReplacer("'", "’")
 	value = replacer.ReplaceAllString(value, " ")
 	value = marksReplacer.Replace(value)

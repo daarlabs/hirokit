@@ -95,6 +95,10 @@ func KeyUp(script string, modifiers ...string) gox.Node {
 	return CreateEvent("keyup", script, modifiers...)
 }
 
+func KeyDown(script string, modifiers ...string) gox.Node {
+	return CreateEvent("keydown", script, modifiers...)
+}
+
 func MouseMove(script string, modifiers ...string) gox.Node {
 	return CreateEvent("mousemove", script, modifiers...)
 }

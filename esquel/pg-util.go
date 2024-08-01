@@ -26,11 +26,10 @@ func CreateTsQuery(values ...any) string {
 			continue
 		}
 		for _, v := range strings.Split(Normalize(value), " ") {
-			n := len(v)
-			if n > 1 {
-				v = v[:n-1]
+			escaped := Escape(v)
+			if len(escaped) == 0 {
+				continue
 			}
-			escaped := Escape(v) + ":*"
 			if slices.Contains(result, escaped) {
 				continue
 			}

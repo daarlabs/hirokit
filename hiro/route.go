@@ -22,6 +22,7 @@ type Route struct {
 	Firewall   []firewall.Firewall
 	PathValues []string
 	Ws         socketer.Ws
+	Components map[string]MandatoryComponent
 }
 
 const (

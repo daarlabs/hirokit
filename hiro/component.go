@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 	
+	"github.com/iancoleman/strcase"
+	
 	"github.com/daarlabs/hirokit/gox"
 	"github.com/daarlabs/hirokit/hx"
 )
@@ -77,8 +79,8 @@ func (i *Interaction) Node() gox.Node {
 	)
 }
 
-func (i *Interaction) Action(action string) *Interaction {
-	i.action = i.c.Generate().Action(action)
+func (i *Interaction) Action(action string, args ...Map) *Interaction {
+	i.action = i.c.Generate().Action(action, args...)
 	return i
 }
 
@@ -116,7 +118,7 @@ func (i *Interaction) With(values Map) *Interaction {
 }
 
 func (i *Interaction) createTarget(target string) {
-	i.target = "#" + strings.TrimPrefix(target, "#")
+	i.target = hx.HashId(strings.TrimPrefix(target, "#"))
 }
 
 func (c *component) render() gox.Node {
@@ -125,9 +127,6 @@ func (c *component) render() gox.Node {
 	isActionRequest := len(c.action) > 0
 	if isActionRequest {
 		methodName, shouldCallAction = c.getAction()
-		if !shouldCallAction {
-			return gox.Fragment()
-		}
 	}
 	c.mustGet()
 	c.injectContext()
@@ -148,7 +147,7 @@ func (c *component) getAction() (string, bool) {
 	n := len(parts)
 	compName := parts[n-2]
 	methodName := parts[n-1]
-	return methodName, compName == c.ct.Name() && c.v.MethodByName(methodName).IsValid()
+	return methodName, compName == strcase.ToKebab(c.ct.Name()) && c.v.MethodByName(methodName).IsValid()
 }
 
 func (c *component) callAction(methodName string) {
@@ -175,7 +174,7 @@ func (c *component) injectContext() {
 	}
 	compCtx := *c.ctx
 	compCtx.component = &componentCtx{
-		name: c.ct.Name(),
+		name: strcase.ToKebab(c.ct.Name()),
 	}
 	compField.Set(reflect.ValueOf(Component{Ctx: &compCtx}))
 }
@@ -207,5 +206,5 @@ func (c *component) save() {
 }
 
 func (c *component) getFullname() string {
-	return createDividedName(c.route.Name, c.ct.Name())
+	return createDividedName(c.route.Name, strcase.ToKebab(c.ct.Name()))
 }

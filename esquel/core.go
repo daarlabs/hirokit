@@ -57,22 +57,11 @@ func (q *Esquel) Q(query string, arg ...Map) *Esquel {
 }
 
 func (q *Esquel) WhereExists() bool {
-	n := len(q.parts)
-	if n > 0 {
-		if whereFinder.MatchString(strings.ToLower(q.parts[n-1].query)) {
+	for _, p := range q.parts {
+		if whereFinder.MatchString(strings.ToLower(p.query)) {
 			return true
 		}
 	}
-	if n > 1 {
-		if whereFinder.MatchString(strings.ToLower(q.parts[n-2].query)) {
-			return true
-		}
-	}
-	// for _, p := range q.parts {
-	// 	if whereFinder.MatchString(strings.ToLower(p.query)) {
-	// 		return true
-	// 	}
-	// }
 	return false
 }
 

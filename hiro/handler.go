@@ -28,7 +28,7 @@ func (h handler) create(fn Handler) func(http.ResponseWriter, *http.Request) {
 		var writer http.ResponseWriter
 		isTempest := strings.HasPrefix(r.URL.Path, tempestAssetsPath)
 		compressedWriter := createCompressedWriter(w)
-		matchedRoute := h.matchRoute(r.URL.Path)
+		matchedRoute := h.matchRoute(r)
 		isWs := matchedRoute != nil && matchedRoute.Ws != nil
 		if !isWs {
 			writer = compressedWriter
@@ -191,14 +191,28 @@ func (h handler) createRecover(c *ctx) {
 	}
 }
 
-func (h handler) matchRoute(path string) *Route {
+func (h handler) matchRoute(r *http.Request) *Route {
+	path := r.URL.Path
 	if strings.HasPrefix(path, tempestAssetsPath) {
 		return nil
 	}
-	for _, r := range *h.core.router.routes {
-		if r.Matcher.MatchString(path) {
-			return r
+	matches := make([]*Route, 0)
+	for _, match := range *h.core.router.routes {
+		if match.Matcher.MatchString(path) {
+			matches = append(matches, match)
 		}
+	}
+	for _, match := range matches {
+		var matchPath string
+		for _, pathValue := range match.PathValues {
+			matchPath = strings.Replace(match.Path, "{"+pathValue+"}", r.PathValue(pathValue), 1)
+		}
+		if strings.TrimSuffix(matchPath, "/") == strings.TrimSuffix(path, "/") {
+			return match
+		}
+	}
+	if len(matches) > 0 {
+		return matches[0]
 	}
 	return nil
 }

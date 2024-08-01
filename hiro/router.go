@@ -233,6 +233,7 @@ func (r *router) createRoute(path string, fn Handler, lang string, config ...Rou
 		Matcher:    matcher,
 		PathValues: pathValues,
 		Firewall:   r.createFirewall(path, name),
+		Components: make(map[string]MandatoryComponent),
 	}
 	if ws {
 		newRoute.Ws = socketer.New(r.config.Ws)

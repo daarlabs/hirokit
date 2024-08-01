@@ -3,6 +3,7 @@ package hiro
 import (
 	"net/http"
 	"net/url"
+	"strings"
 	
 	"github.com/daarlabs/hirokit/env"
 	"github.com/daarlabs/hirokit/hx"
@@ -45,6 +46,7 @@ type RequestIs interface {
 	Head() bool
 	Connect() bool
 	Trace() bool
+	Form() bool
 }
 
 type request struct {
@@ -240,4 +242,10 @@ func (r requestIs) Connect() bool {
 
 func (r requestIs) Trace() bool {
 	return r.r.Method == http.MethodTrace
+}
+
+func (r requestIs) Form() bool {
+	return r.r.Header.Get(header.ContentType) == "application/x-www-form-urlencoded" || strings.Contains(
+		r.r.Header.Get(header.ContentType), "multipart/form-data",
+	)
 }
