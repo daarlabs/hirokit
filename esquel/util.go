@@ -12,17 +12,8 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-const (
-	regexSpecialCharactersPattern = "[-_.,=&;@/(){}]`"
-)
-
 var (
-	specialCharactersReplacer = regexp.MustCompile(regexSpecialCharactersPattern)
-)
-
-var (
-	regexParamPattern = "( |,)" + ParamPrefix + "[a-zA-Z0-9_]+"
-	regexParam        = regexp.MustCompile(regexParamPattern)
+	paramMatcher = regexp.MustCompile(ParamPrefix + "[a-zA-Z0-9_]+")
 )
 
 var (
@@ -100,19 +91,6 @@ func createSlicePlaceholder(len int) string {
 
 func replaceStringAtIndex(str, substr, newSubstr string, index int) string {
 	return str[:index] + newSubstr + str[index+len(substr):]
-}
-
-func containsQueryNamedParam(q string) bool {
-	for _, item := range regexParam.FindAllString(q, -1) {
-		i := strings.Index(q, item)
-		if i == 0 {
-			continue
-		}
-		if q[i-1:i] != ParamPrefix {
-			return true
-		}
-	}
-	return false
 }
 
 func latinize(value string) string {

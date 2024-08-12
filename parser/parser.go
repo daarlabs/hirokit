@@ -24,7 +24,6 @@ type Parse interface {
 	Text() (string, error)
 	Xml(target any) error
 	Url(target any) error
-	Multiple() Parse
 	
 	MustQuery(key string, target any)
 	MustPathValue(key string, target any)
@@ -37,9 +36,8 @@ type Parse interface {
 }
 
 type Parser struct {
-	r        *http.Request
-	limit    int64
-	multiple bool
+	r     *http.Request
+	limit int64
 }
 
 func New(r *http.Request, limit int64) *Parser {
@@ -49,11 +47,6 @@ func New(r *http.Request, limit int64) *Parser {
 	}
 }
 
-func (p *Parser) Multiple() Parse {
-	p.multiple = true
-	return p
-}
-
 func (p *Parser) Query(key string, target any) error {
 	q := p.r.URL.Query()
 	qv, ok := q[key]
@@ -61,11 +54,11 @@ func (p *Parser) Query(key string, target any) error {
 		return nil
 	}
 	n := len(qv)
-	if !p.multiple && n == 1 {
+	if n > 0 {
+		if reflect.TypeOf(target).Elem().Kind() == reflect.Slice {
+			return convertx.ConvertSlice(qv, target)
+		}
 		return convertx.ConvertValue(qv[0], target)
-	}
-	if p.multiple || n > 1 {
-		return convertx.ConvertSlice(qv, target)
 	}
 	return nil
 }

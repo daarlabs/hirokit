@@ -28,9 +28,4 @@ func TestUtil(t *testing.T) {
 			)
 		},
 	)
-	t.Run(
-		"contains query named param", func(t *testing.T) {
-			containsQueryNamedParam(`:Neco::tsquery`)
-		},
-	)
 }

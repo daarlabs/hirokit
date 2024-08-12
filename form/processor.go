@@ -48,6 +48,10 @@ func processFormData(form *Builder, data url.Values) {
 					form.fields[i].value = item[0]
 				}
 				if field.multiple {
+					if len(item) == 1 && item[0] == "" {
+						form.fields[i].value = make([]string, 0)
+						continue
+					}
 					form.fields[i].value = item
 				}
 			case fieldDataTypeFloat:
@@ -55,6 +59,10 @@ func processFormData(form *Builder, data url.Values) {
 					form.fields[i].value = convertToFloat(item[0])
 				}
 				if field.multiple {
+					if len(item) == 1 && item[0] == "" {
+						form.fields[i].value = make([]float64, 0)
+						continue
+					}
 					form.fields[i].value = convertSlice[string, float64](
 						item, func(v string) float64 {
 							return convertToFloat(v)
@@ -66,6 +74,10 @@ func processFormData(form *Builder, data url.Values) {
 					form.fields[i].value = convertToInt(item[0])
 				}
 				if field.multiple {
+					if len(item) == 1 && item[0] == "" {
+						form.fields[i].value = make([]int, 0)
+						continue
+					}
 					form.fields[i].value = convertSlice[string, int](
 						item, func(v string) int {
 							return convertToInt(v)
@@ -74,9 +86,13 @@ func processFormData(form *Builder, data url.Values) {
 				}
 			case fieldDataTypeInt64:
 				if !field.multiple {
-					form.fields[i].value = convertToInt(item[0])
+					form.fields[i].value = int64(convertToInt(item[0]))
 				}
 				if field.multiple {
+					if len(item) == 1 && item[0] == "" {
+						form.fields[i].value = make([]int64, 0)
+						continue
+					}
 					form.fields[i].value = convertSlice[string, int64](
 						item, func(v string) int64 {
 							return convertToInt64(v)
@@ -89,6 +105,10 @@ func processFormData(form *Builder, data url.Values) {
 					form.fields[i].value = t
 				}
 				if field.multiple {
+					if len(item) == 1 && item[0] == "" {
+						form.fields[i].value = make([]time.Time, 0)
+						continue
+					}
 					form.fields[i].value = convertSlice[string, time.Time](
 						item, func(v string) time.Time {
 							t, _ := time.Parse(fieldTimeFormat, v)

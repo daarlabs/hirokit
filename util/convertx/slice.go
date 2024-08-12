@@ -23,6 +23,12 @@ func ConvertSlice(src []string, t interface{}) error {
 				return err
 			}
 			convertedValue = reflect.ValueOf(intVal)
+		case reflect.Int64:
+			intVal, err := strconv.ParseInt(item, 10, 64)
+			if err != nil {
+				return err
+			}
+			convertedValue = reflect.ValueOf(intVal)
 		case reflect.Float32:
 			floatVal, err := strconv.ParseFloat(item, 32)
 			if err != nil {

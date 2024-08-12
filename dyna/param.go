@@ -32,10 +32,10 @@ func (p Param) Parse(c hiro.Ctx) Param {
 	c.Parse().MustQuery(Fulltext, &p.Fulltext)
 	c.Parse().MustQuery(Offset, &p.Offset)
 	c.Parse().MustQuery(Limit, &p.Limit)
-	c.Parse().Multiple().MustQuery(Order, &p.Order)
+	c.Parse().MustQuery(Order, &p.Order)
 	for filterKey := range p.Fields.Map {
 		filterValue := make([]string, 0)
-		c.Parse().Multiple().MustQuery(filterKey, &filterValue)
+		c.Parse().MustQuery(filterKey, &filterValue)
 		for _, v := range filterValue {
 			if len(v) == 0 {
 				continue

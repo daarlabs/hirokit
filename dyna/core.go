@@ -231,6 +231,7 @@ func (d *dyna) findManyWithDb(name string, v any, t any) error {
 	}
 	q := d.db.Q("SELECT "+d.createFields()).
 		Q(`FROM `+d.query.Table).
+		Q(`AS `+d.query.Alias).
 		Q(`WHERE `+name+` IN (@values)`, esquel.Map{"values": v}).
 		Q(fmt.Sprintf("LIMIT %d", vv.Len()))
 	return q.Exec(t)

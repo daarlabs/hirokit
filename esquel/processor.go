@@ -18,8 +18,7 @@ const (
 )
 
 var (
-	tableColCharMatcher   = regexp.MustCompile(`[a-zA-Z0-9_]`)
-	argPlaceholderMatcher = regexp.MustCompile(`\(\$[0-9]+\)`)
+	tableColCharMatcher = regexp.MustCompile(`[a-zA-Z0-9_]`)
 )
 
 var (
@@ -128,7 +127,7 @@ func processQueryInOperator(q string) string {
 }
 
 func existsNameInQuery(name, query string) bool {
-	return regexp.MustCompile(regexp.QuoteMeta(ParamPrefix+name)+`([ ,)'])`).MatchString(query) || strings.HasSuffix(
+	return regexp.MustCompile(regexp.QuoteMeta(ParamPrefix+name)).MatchString(query) || strings.HasSuffix(
 		query, ParamPrefix+name,
 	)
 }
