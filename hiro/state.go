@@ -8,7 +8,6 @@ import (
 	
 	"github.com/daarlabs/hirokit/cache"
 	"github.com/daarlabs/hirokit/cookie"
-	"github.com/daarlabs/hirokit/dd"
 )
 
 type State interface {
@@ -76,8 +75,6 @@ func (s *state) Get(key string, target any) error {
 	if tt.Kind() != reflect.Ptr {
 		return ErrorNoPtr
 	}
-	vt := reflect.TypeOf(v)
-	dd.Print(tt.Elem(), vt)
 	reflect.ValueOf(target).Elem().Set(reflect.ValueOf(v))
 	delete(s.Customs, key)
 	return s.save()
