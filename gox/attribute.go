@@ -156,7 +156,7 @@ func AutoCapitalize(values ...bool) Node {
 	return createAttribute(attributeAutoCapitalize, values...)
 }
 
-func AutoComplete(values ...bool) Node {
+func AutoComplete(values ...string) Node {
 	return createAttribute(attributeAutoComplete, values...)
 }
 

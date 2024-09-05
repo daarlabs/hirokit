@@ -34,10 +34,10 @@ func (m *manager) Unmarshal(b []byte, target any) error {
 				ft := targetType.Field(j)
 				fv := targetRow.Elem().Field(j)
 				tag := ft.Tag.Get(csvTag)
-				if tag == "" || tag == "-" || !fv.IsValid() || !fv.CanAddr() || !fv.CanSet() {
+				if tag != fieldName {
 					continue
 				}
-				if tag != fieldName {
+				if tag == "" || tag == "-" || !fv.IsValid() || !fv.CanAddr() || !fv.CanSet() {
 					continue
 				}
 				switch ft.Type.Kind() {
