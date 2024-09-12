@@ -1,6 +1,7 @@
 package hiro
 
 import (
+	"encoding/json"
 	"reflect"
 	"time"
 	
@@ -12,11 +13,13 @@ import (
 
 type State interface {
 	Token() string
-	Get(key string, target any) error
+	Get(key string, target any, preserve ...bool) error
 	Save(key string, value any) error
+	Delete(key string) error
 	
-	MustGet(key string, target any)
+	MustGet(key string, target any, preserve ...bool)
 	MustSave(key string, value any)
+	MustDelete(key string)
 }
 
 type state struct {
@@ -66,7 +69,7 @@ func (s *state) Token() string {
 	return s.token
 }
 
-func (s *state) Get(key string, target any) error {
+func (s *state) Get(key string, target any, preserve ...bool) error {
 	v, ok := s.Customs[key]
 	if !ok {
 		return nil
@@ -75,13 +78,22 @@ func (s *state) Get(key string, target any) error {
 	if tt.Kind() != reflect.Ptr {
 		return ErrorNoPtr
 	}
-	reflect.ValueOf(target).Elem().Set(reflect.ValueOf(v))
+	storedBytes, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(storedBytes, target); err != nil {
+		return err
+	}
+	if len(preserve) > 0 && preserve[0] {
+		return s.save()
+	}
 	delete(s.Customs, key)
 	return s.save()
 }
 
-func (s *state) MustGet(key string, target any) {
-	err := s.Get(key, target)
+func (s *state) MustGet(key string, target any, preserve ...bool) {
+	err := s.Get(key, target, preserve...)
 	if err != nil {
 		panic(err)
 	}
@@ -94,6 +106,18 @@ func (s *state) Save(key string, value any) error {
 
 func (s *state) MustSave(key string, value any) {
 	err := s.Save(key, value)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (s *state) Delete(key string) error {
+	delete(s.Customs, key)
+	return s.save()
+}
+
+func (s *state) MustDelete(key string) {
+	err := s.Delete(key)
 	if err != nil {
 		panic(err)
 	}
