@@ -54,5 +54,8 @@ const (
 )
 
 func On(event string, value ...string) gox.Node {
+	if len(event) == 0 {
+		return gox.CreateAttribute[string](atrributePrefix + "-on")(value...)
+	}
 	return gox.CreateAttribute[string](atrributePrefix + "-on:" + event)(value...)
 }
