@@ -2,6 +2,7 @@ package csv
 
 import (
 	"reflect"
+	"strings"
 	
 	"github.com/daarlabs/hirokit/util/convertx"
 )
@@ -29,7 +30,7 @@ func (m *manager) Unmarshal(b []byte, target any) error {
 			if i >= fieldsLen {
 				continue
 			}
-			fieldName := m.fields[i]
+			fieldName := strings.ReplaceAll(m.fields[i], "\ufeff", "")
 			for j := 0; j < targetType.NumField(); j++ {
 				ft := targetType.Field(j)
 				fv := targetRow.Elem().Field(j)
