@@ -22,30 +22,45 @@ func ConvertValue(src string, t interface{}) error {
 	}
 	switch reflect.TypeOf(t).Elem().Kind() {
 	case reflect.Int:
+		if len(src) == 0 {
+			src = "0"
+		}
 		val, err := strconv.Atoi(src)
 		if err != nil {
 			return err
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Int64:
+		if len(src) == 0 {
+			src = "0"
+		}
 		val, err := strconv.ParseInt(src, 10, 64)
 		if err != nil {
 			return err
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Float32:
+		if len(src) == 0 {
+			src = "0"
+		}
 		val, err := strconv.ParseFloat(floatReplacer.Replace(src), 32)
 		if err != nil {
 			return err
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Float64:
+		if len(src) == 0 {
+			src = "0"
+		}
 		val, err := strconv.ParseFloat(floatReplacer.Replace(src), 64)
 		if err != nil {
 			return err
 		}
 		tv.Elem().Set(reflect.ValueOf(val))
 	case reflect.Bool:
+		if len(src) == 0 {
+			src = "false"
+		}
 		if src == "on" {
 			tv.Elem().Set(reflect.ValueOf(true))
 			return nil
